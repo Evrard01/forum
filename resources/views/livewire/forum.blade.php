@@ -1,5 +1,24 @@
-<div class="row" wire:poll>
-    @if ($showMode)
+<div wire:poll>
+    @if (count($notification))
+    <div x-data="{note:false}">
+        <div class="">
+            vous avez {{count($notification)}} <button class="btn btn-info" @click="note = ! note">Notification{{count($notification)>=2 ? 's' :''}}</button>
+        </div>
+        <div x-show="note" class="bg-warning">
+            @foreach ($notification as $notes)
+                <div class="media position-relative" style="border-color: green;">
+                    <b>{{$notes->sujet->titre }}</b>
+                    <p>
+                        {{Str::limit($notes->sujet->message,15)}}
+                    </p>
+                    <a href="#" wire:click.prevent="showSujet({{$notes->sujet}})" class="stretched-link"></a>
+                </div> <hr>
+            @endforeach
+        </div>
+    </div> <hr>
+    @endif
+    <div class="row" >
+        @if ($showMode)
     <div class="row justify-content-center p-4" style="display: inline-flex; width:100%;">
         <div style="width: 50%; background-color: white;">
             <h2>{{$sujet->titre}}</h2>
@@ -81,9 +100,10 @@
     </div>
     @else
     <div class="row justify-content-center p-4" style="display: inline-flex; width:100%;">
-        <div style="width: 50%">
-            @forelse ($sujets as $sujet)
-            <div class="media position-relative">
+        <div style="width: 50%" >
+        <h1 style="text-decoration: underline">Tous les Sujets</h1>
+            @forelse ($sujets->sortBy('etat') as $sujet)
+            <div class="media position-relative" style="font-size: 12px;">
                 {{-- <img src="..." class="mr-3" alt="..."> --}}
                 <div class="media-body" style="background-color: white;">
                     <h5 class="mt-0"><b>{{$sujet->titre}}</b></h5>
@@ -92,13 +112,15 @@
                     <a href="#" wire:click.prevent="showSujet({{$sujet}})" class="stretched-link"></a>
                 </div>
             </div> <br>
+
             @empty
             <h3><b>Aucune données pour le moment</b></h3>
             @endforelse
+            {{$sujets->links()}}
         </div>
         <div style="width: 50%">
             <div>
-                <h3>Creer un sujet</h3>
+                <h3 style="text-decoration: underline">Creer un sujet</h3>
                 <form>
                     <div class="mb-3">
                         <label for="titre" class="form-label">Titre: </label>
@@ -117,6 +139,7 @@
         </div>
     </div>
     @endif
+    </div>
 </div>
 
 

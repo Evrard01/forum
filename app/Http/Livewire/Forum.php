@@ -2,20 +2,27 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\Discution;
+use App\Models\User;
 use App\Models\Sujet;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use App\Models\Discution;
+use App\Models\Notification;
+use Illuminate\Support\Facades\Auth;
+use Livewire\WithPagination;
 
 class Forum extends Component
 {
+    use WithPagination;
     public $titre="";
     public $description="";
-    public $sujets;
+    // public $sujets;
     public $showMode=false;
     public $commentaire="";
     public $parent;
     public $souscomment="";
+    public $notification;
+    public $notes;
+    protected $paginationTheme = 'bootstrap';
     // protected $rules=[
     //     "titre"=>"required",
     //     "description"=>"required"
@@ -28,11 +35,22 @@ class Forum extends Component
             "description"=>"required"
         ]);
 
-        Sujet::create([
+        $sujet=Sujet::create([
             "user_id"=>Auth::id(),
             "titre"=>$this->titre,
             "message"=>$this->description
         ]);
+
+        $users = User::all();
+
+        foreach ($users as $user){
+            if ($user->id != $sujet->user_id) {
+                Notification::create([
+                    "user_id"=>$user->id,
+                    "sujet_id"=>$sujet->id,
+                ]);
+            }
+        }
         return redirect()->route('home');
         $this->reset(["titre", "description"]);
         $this->resetErrorBag(["titre", "description"]);
@@ -40,8 +58,10 @@ class Forum extends Component
 
     public function showSujet(Sujet $sujet)
     {
+        // dump($sujet);
         $this->showMode=true;
         $this->sujet = $sujet;
+        Notification::where('user_id',Auth::id())->delete();
         $this->reset(["titre", "description"]);
         $this->resetErrorBag(["titre", "description"]);
     }
@@ -93,10 +113,13 @@ class Forum extends Component
 
     public function mount()
     {
-        $this->sujets = SUjet::all();
+        // $this->sujets = SUjet::paginate(5);
+        $this->notification = Notification::where('user_id',Auth::id())->get();
     }
     public function render()
     {
-        return view('livewire.forum');
+        return view('livewire.forum',[
+            "sujets"=>Sujet::paginate(3)
+        ]);
     }
 }
